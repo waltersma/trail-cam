@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SecHub Push</title>
+  <title>TrailCam Push</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -360,7 +360,7 @@
           method: 'POST',
           body: JSON.stringify({
             title: "🚨 Motion Detected!",
-            message: "New security video recorded. Click to view.",
+            message: "New recording. Click to view.",
             priority: 4, // High priority (Plays loud sound)
             tags: ["warning", "camera"]
           })
