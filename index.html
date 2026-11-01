@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecHub Push</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --accent: #00e676;
+      --alert: #ff5252;
+      --text: #ffffff;
+      --subtext: #aaaaaa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 12px;
+      max-width: 500px;
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: 1.4rem; text-align: center; }
+    h2 { font-size: 1.1rem; }
+
+    .card {
+      background-color: var(--card);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .nav { display: flex; gap: 8px; }
+
+    .nav-btn {
+      flex: 1;
+      padding: 8px;
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--text);
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .nav-btn.active { background-color: var(--accent); color: #000; }
+
+    button.btn {
+      background-color: var(--accent);
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    button.btn.stop { background-color: var(--alert); color: #fff; }
+    button.btn.sub { background-color: #29b6f6; color: #000; }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      margin-top: 4px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      background-color: #333;
+      color: var(--subtext);
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    .badge.active { background-color: var(--accent); color: #000; }
+    .badge.recording { background-color: var(--alert); color: #fff; animation: pulse 1s infinite alternate; }
+
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    .screen {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background-color: #000;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    video { width: 100%; height: 100%; object-fit: cover; }
+    canvas#motion-canvas { display: none; }
+
+    .rec-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+
+    .rec-item {
+      background-color: #2a2a2a;
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rec-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: var(--subtext);
+    }
+
+    .dl-link { color: var(--accent); font-size: 0.8rem; font-weight: bold; text-decoration: none; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>SecHub Push</h1>
+
+  <!-- Role Selector -->
+  <div class="card">
+    <div class="nav">
+      <button id="nav-cam" class="nav-btn active">Cam</button>
+      <button id="nav-view" class="nav-btn">Viewer</button>
+    </div>
+  </div>
+
+  <!-- CAMERA PANEL -->
+  <div id="panel-cam" class="card">
+    <h2>Cam Node</h2>
+    <input type="password" id="cam-pass" placeholder="Password">
+    
+    <div class="row">
+      <label for="sens">Sens: <span id="sens-val">20</span>%</label>
+      <input type="range" id="sens" min="5" max="50" value="20">
+    </div>
+
+    <button id="cam-toggle-btn" class="btn">Start</button>
+    <div><span id="cam-status" class="badge">Idle</span></div>
+
+    <div class="screen">
+      <video id="cam-preview" autoplay playsinline muted></video>
+    </div>
+
+    <h3 style="margin-top: 12px; font-size: 0.95rem;">Recs</h3>
+    <div id="rec-list-cam" class="rec-list">
+      <p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">No recs.</p>
+    </div>
+  </div>
+
+  <!-- VIEWER PANEL -->
+  <div id="panel-view" class="card hidden">
+    <h2>Viewer</h2>
+    <input type="password" id="view-pass" placeholder="Password">
+    <button id="sub-push-btn" class="btn sub">Enable Background Alerts</button>
+    <button id="view-connect-btn" class="btn">Connect Live</button>
+
+    <div><span id="view-status" class="badge">Off</span></div>
+
+    <div class="screen">
+      <video id="remote-video" autoplay playsinline></video>
+    </div>
+
+    <h3 style="margin-top: 12px; font-size: 0.95rem;">Recs</h3>
+    <div id="rec-list-view" class="rec-list">
+      <p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">Connect to fetch.</p>
+    </div>
+  </div>
+
+  <canvas id="motion-canvas" width="160" height="120"></canvas>
+
+  <script>
+    // Register Service Worker for Background Alerts
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('SW Registered'))
+        .catch(err => console.error('SW Registration Failed:', err));
+    }
+
+    // Navigation Toggles
+    const navCam = document.getElementById('nav-cam');
+    const navView = document.getElementById('nav-view');
+    const panelCam = document.getElementById('panel-cam');
+    const panelView = document.getElementById('panel-view');
+
+    navCam.onclick = () => {
+      navCam.classList.add('active'); navView.classList.remove('active');
+      panelCam.classList.remove('hidden'); panelView.classList.add('hidden');
+    };
+
+    navView.onclick = () => {
+      navView.classList.add('active'); navCam.classList.remove('active');
+      panelView.classList.remove('hidden'); panelCam.classList.add('hidden');
+    };
+
+    // Password Hash Helper
+    async function hashPass(pass) {
+      const msgUint8 = new TextEncoder().encode("sec_cam_" + pass);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return 'cam-' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+    }
+
+    // Dynamic Recording Format Support
+    function getSupportedMime() {
+      const types = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
+      for (let t of types) { if (MediaRecorder.isTypeSupported(t)) return t; }
+      return '';
+    }
+
+    const localRecs = [];
+
+    // -------------------------------------------------------------
+    // CAMERA LOGIC
+    // -------------------------------------------------------------
+    const camToggleBtn = document.getElementById('cam-toggle-btn');
+    const camPassInput = document.getElementById('cam-pass');
+    const sensInput = document.getElementById('sens');
+    const sensVal = document.getElementById('sens-val');
+    const camStatus = document.getElementById('cam-status');
+    const camPreview = document.getElementById('cam-preview');
+    const recListCam = document.getElementById('rec-list-cam');
+    const motionCanvas = document.getElementById('motion-canvas');
+    const ctx = motionCanvas.getContext('2d', { willReadFrequently: true });
+
+    let sensThreshold = parseInt(sensInput.value);
+    sensInput.oninput = (e) => {
+      sensThreshold = parseInt(e.target.value);
+      sensVal.textContent = sensThreshold;
+    };
+
+    let stream = null;
+    let peer = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let previousFrameData = null;
+    let checkInterval = null;
+    let recordingTimeout = null;
+    let recStartTime = 0;
+    let pushTopicId = "";
+
+    camToggleBtn.onclick = () => { peer ? stopCam() : startCam(); };
+
+    async function startCam() {
+      const pass = camPassInput.value.trim();
+      if (!pass) { alert("Set password!"); return; }
+
+      try {
+        pushTopicId = await hashPass(pass);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: true
+        });
+        camPreview.srcObject = stream;
+
+        peer = new Peer(pushTopicId);
+
+        peer.on('open', () => {
+          camStatus.textContent = "Active";
+          camStatus.className = "badge active";
+          camToggleBtn.textContent = "Stop";
+          camToggleBtn.classList.add("stop");
+          camPassInput.disabled = true;
+          checkInterval = setInterval(detectMotion, 200);
+        });
+
+        peer.on('call', call => call.answer(stream));
+
+        peer.on('connection', conn => {
+          conn.on('data', async data => {
+            if (data.type === 'GET_RECS') {
+              const exportList = await Promise.all(localRecs.map(async item => {
+                const buffer = await item.blob.arrayBuffer();
+                return { id: item.id, timestamp: item.timestamp, duration: item.duration, ext: item.ext, buffer };
+              }));
+              conn.send({ type: 'RECS_LIST', payload: exportList });
+            }
+          });
+        });
+
+      } catch (err) {
+        alert("Err: " + err.message);
+      }
+    }
+
+    function stopCam() {
+      if (checkInterval) clearInterval(checkInterval);
+      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (peer) peer.destroy();
+
+      peer = null; stream = null; isRecording = false;
+      camPreview.srcObject = null;
+      camStatus.textContent = "Idle";
+      camStatus.className = "badge";
+      camToggleBtn.textContent = "Start";
+      camToggleBtn.classList.remove("stop");
+      camPassInput.disabled = false;
+    }
+
+    function detectMotion() {
+      if (camPreview.readyState !== 4) return;
+
+      ctx.drawImage(camPreview, 0, 0, motionCanvas.width, motionCanvas.height);
+      const currentFrame = ctx.getImageData(0, 0, motionCanvas.width, motionCanvas.height);
+      const currentData = currentFrame.data;
+
+      if (previousFrameData) {
+        let changedPixels = 0;
+        const totalPixels = currentData.length / 4;
+
+        for (let i = 0; i < currentData.length; i += 4) {
+          const diff = (Math.abs(currentData[i] - previousFrameData[i]) +
+                        Math.abs(currentData[i+1] - previousFrameData[i+1]) +
+                        Math.abs(currentData[i+2] - previousFrameData[i+2])) / 3;
+          if (diff > 30) changedPixels++;
+        }
+
+        if ((changedPixels / totalPixels) * 100 >= sensThreshold) {
+          if (!isRecording) triggerRecording();
+          else extendRecording();
+        }
+      }
+      previousFrameData = currentData;
+    }
+
+    // Trigger External Webhook to wake up closed main phone
+    async function sendPushNotification() {
+      if (!pushTopicId) return;
+      try {
+        await fetch(`https://ntfy.sh/${pushTopicId}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            title: "🚨 Motion Detected!",
+            message: "New security video recorded. Click to view.",
+            priority: 4, // High priority (Plays loud sound)
+            tags: ["warning", "camera"]
+          })
+        });
+      } catch (e) { console.error("Push delivery failed:", e); }
+    }
+
+    function triggerRecording() {
+      isRecording = true;
+      recStartTime = Date.now();
+      camStatus.textContent = "REC";
+      camStatus.className = "badge recording";
+
+      sendPushNotification(); // Wakes up viewer phone instantly!
+
+      const timestamp = new Date().toLocaleTimeString();
+      recordedChunks = [];
+
+      const selectedMime = getSupportedMime();
+      const options = selectedMime ? { mimeType: selectedMime } : {};
+
+      try { mediaRecorder = new MediaRecorder(stream, options); }
+      catch (e) { mediaRecorder = new MediaRecorder(stream); }
+
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      
+      mediaRecorder.onstop = () => {
+        const durationSec = Math.round((Date.now() - recStartTime) / 1000) + 's';
+        const actualMime = mediaRecorder.mimeType || selectedMime || 'video/mp4';
+        const ext = actualMime.includes('webm') ? 'webm' : 'mp4';
+        const blob = new Blob(recordedChunks, { type: actualMime });
+
+        const recItem = { id: Date.now(), timestamp, duration: durationSec, blob, ext };
+        localRecs.unshift(recItem);
+        
+        renderRecItem(recListCam, recItem);
+
+        isRecording = false;
+        camStatus.textContent = "Active";
+        camStatus.className = "badge active";
+      };
+
+      mediaRecorder.start();
+      scheduleCutoff();
+    }
+
+    function extendRecording() {
+      clearTimeout(recordingTimeout);
+      scheduleCutoff();
+    }
+
+    function scheduleCutoff() {
+      recordingTimeout = setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      }, 10000);
+    }
+
+    // -------------------------------------------------------------
+    // VIEWER LOGIC
+    // -------------------------------------------------------------
+    const viewConnectBtn = document.getElementById('view-connect-btn');
+    const subPushBtn = document.getElementById('sub-push-btn');
+    const viewPassInput = document.getElementById('view-pass');
+    const viewStatus = document.getElementById('view-status');
+    const remoteVideo = document.getElementById('remote-video');
+    const recListView = document.getElementById('rec-list-view');
+
+    // Subscribe Main Phone to Background Alerts
+    subPushBtn.onclick = async () => {
+      const pass = viewPassInput.value.trim();
+      if (!pass) { alert("Enter password first!"); return; }
+
+      const topicId = await hashPass(pass);
+
+      if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          alert("Notification permission denied!");
+          return;
+        }
+      }
+
+      // Register SW to public push gateway
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: null // Uses public WebPush
+        });
+      } catch (e) {
+        // Fallback endpoint link for browsers using SSE/ntfy directly
+        window.open(`https://ntfy.sh/${topicId}`, '_blank');
+      }
+
+      alert("Subscribed! You will now get background alerts even when browser is closed.");
+    };
+
+    viewConnectBtn.onclick = async () => {
+      const pass = viewPassInput.value.trim();
+      if (!pass) { alert("Enter password!"); return; }
+
+      viewStatus.textContent = "Connecting...";
+      const targetPeerId = await hashPass(pass);
+
+      const clientPeer = new Peer();
+
+      clientPeer.on('open', () => {
+        const call = clientPeer.call(targetPeerId, new MediaStream());
+
+        call.on('stream', remoteStream => {
+          viewStatus.textContent = "Live";
+          viewStatus.className = "badge active";
+          remoteVideo.srcObject = remoteStream;
+        });
+
+        const conn = clientPeer.connect(targetPeerId);
+        conn.on('open', () => conn.send({ type: 'GET_RECS' }));
+
+        conn.on('data', data => {
+          if (data.type === 'RECS_LIST') {
+            recListView.innerHTML = "";
+            if (data.payload.length === 0) {
+              recListView.innerHTML = '<p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">No recs.</p>';
+            } else {
+              data.payload.forEach(item => {
+                const mime = item.ext === 'webm' ? 'video/webm' : 'video/mp4';
+                const blob = new Blob([item.buffer], { type: mime });
+                renderRecItem(recListView, { ...item, blob });
+              });
+            }
+          }
+        });
+      });
+
+      clientPeer.on('error', () => {
+        viewStatus.textContent = "Failed";
+        viewStatus.className = "badge";
+      });
+    };
+
+    function renderRecItem(container, item) {
+      const emptyMsg = container.querySelector('p');
+      if (emptyMsg) emptyMsg.remove();
+
+      const videoUrl = URL.createObjectURL(item.blob);
+      const div = document.createElement('div');
+      div.className = 'rec-item';
+
+      div.innerHTML = `
+        <div class="rec-header">
+          <span>${item.timestamp}</span>
+          <span>Length: ${item.duration}</span>
+        </div>
+        <video src="${videoUrl}" controls playsinline style="border-radius: 4px;"></video>
+        <a href="${videoUrl}" download="rec_${item.id}.${item.ext}" class="dl-link">⬇ Save (.${item.ext})</a>
+      `;
+      container.insertBefore(div, container.firstChild);
+    }
+  </script>
+</body>
+</html>
+
