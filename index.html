@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TrailCam Push</title>
+  <title>trail-cam</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -142,19 +142,19 @@
 </head>
 <body>
 
-  <h1>SecHub Push</h1>
+  <h1>trail-cam</h1>
 
   <!-- Role Selector -->
   <div class="card">
     <div class="nav">
-      <button id="nav-cam" class="nav-btn active">Cam</button>
+      <button id="nav-cam" class="nav-btn active">Camera</button>
       <button id="nav-view" class="nav-btn">Viewer</button>
     </div>
   </div>
 
   <!-- CAMERA PANEL -->
   <div id="panel-cam" class="card">
-    <h2>Cam Node</h2>
+    <h2>Camera</h2>
     <input type="password" id="cam-pass" placeholder="Password">
     
     <div class="row">
@@ -169,9 +169,9 @@
       <video id="cam-preview" autoplay playsinline muted></video>
     </div>
 
-    <h3 style="margin-top: 12px; font-size: 0.95rem;">Recs</h3>
+    <h3 style="margin-top: 12px; font-size: 0.95rem;">Recordings</h3>
     <div id="rec-list-cam" class="rec-list">
-      <p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">No recs.</p>
+      <p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">No recordings</p>
     </div>
   </div>
 
@@ -179,7 +179,7 @@
   <div id="panel-view" class="card hidden">
     <h2>Viewer</h2>
     <input type="password" id="view-pass" placeholder="Password">
-    <button id="sub-push-btn" class="btn sub">Enable Background Alerts</button>
+    <button id="sub-push-btn" class="btn sub">Enable Alerts</button>
     <button id="view-connect-btn" class="btn">Connect Live</button>
 
     <div><span id="view-status" class="badge">Off</span></div>
@@ -188,9 +188,9 @@
       <video id="remote-video" autoplay playsinline></video>
     </div>
 
-    <h3 style="margin-top: 12px; font-size: 0.95rem;">Recs</h3>
+    <h3 style="margin-top: 12px; font-size: 0.95rem;">Recordings</h3>
     <div id="rec-list-view" class="rec-list">
-      <p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">Connect to fetch.</p>
+      <p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">Connect to fetch</p>
     </div>
   </div>
 
@@ -483,7 +483,7 @@
           if (data.type === 'RECS_LIST') {
             recListView.innerHTML = "";
             if (data.payload.length === 0) {
-              recListView.innerHTML = '<p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">No recs.</p>';
+              recListView.innerHTML = '<p style="color: var(--subtext); font-style: italic; font-size: 0.8rem;">No recordings</p>';
             } else {
               data.payload.forEach(item => {
                 const mime = item.ext === 'webm' ? 'video/webm' : 'video/mp4';
