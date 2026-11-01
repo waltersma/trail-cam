@@ -4,7 +4,7 @@ self.addEventListener('push', (event) => {
   
   const title = data.title || '🚨 Motion Detected!';
   const options = {
-    body: data.message || 'Security camera triggered a new recording.',
+    body: data.message || 'New recording.',
     icon: 'https://cdn-icons-png.flaticon.com/512/1179/1179120.png', // Default camera icon
     badge: 'https://cdn-icons-png.flaticon.com/512/1179/1179120.png',
     vibrate: [200, 100, 200, 100, 200],
